@@ -3,20 +3,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 
-interface Team {
-  id: string;
-  name: string;
-  group_id: string;
-}
-
-interface Match {
-  team1_id: string;
-  team2_id: string;
-  score1: number;
-  score2: number;
-  status: string;
-}
-
 interface Standing {
   teamId: string;
   name: string;

@@ -106,7 +106,7 @@ export default function Court() {
       supabase.removeChannel(roundSubscription);
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [courtId]);
+  }, [courtId, match]);
 
   const updateScore = async (matchId: string, scoreField: 'score1' | 'score2', delta: number) => {
     if (!match || match.id !== matchId) return;
