@@ -112,6 +112,12 @@ export default function Admin() {
     fetchData();
   };
 
+  const resetRound = async (roundId: string) => {
+    await supabase.from('rounds').update({ status: 'pending', start_time: null, end_time: null }).eq('id', roundId);
+    await supabase.from('matches').update({ status: 'pending', score1: 0, score2: 0 }).eq('round_id', roundId);
+    fetchData();
+  };
+
   return (
     <div className="p-4">
       <h1 className="text-2xl font-bold mb-4">Admin Panel - Baseball Tournament</h1>
@@ -170,6 +176,7 @@ export default function Admin() {
               Round {r.number} - Status: {r.status}
               {r.status === 'pending' && <button onClick={() => startRound(r.id)} className="ml-2 bg-green-500 text-white p-1">Start</button>}
               {r.status === 'active' && <button onClick={() => finishRound(r.id)} className="ml-2 bg-red-500 text-white p-1">Finish</button>}
+              {r.status === 'finished' && <button onClick={() => resetRound(r.id)} className="ml-2 bg-yellow-500 text-white p-1">Restart</button>}
             </li>
           ))}
         </ul>
