@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 
+export const dynamic = 'force-dynamic';
+
 interface Standing {
   teamId: string;
   name: string;

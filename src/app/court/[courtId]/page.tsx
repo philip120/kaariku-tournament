@@ -4,6 +4,8 @@ import { useParams } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../../lib/supabase';
 
+export const dynamic = 'force-dynamic';
+
 interface Match {
   id: string;
   team1_id: string;
