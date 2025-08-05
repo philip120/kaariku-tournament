@@ -83,8 +83,9 @@ export default function Court() {
         table: 'matches',
         filter: `court=eq.${courtId}`
       }, (payload) => {
-        if (payload.new && match && payload.new.id === match.id) {
-          setMatch(prev => prev ? { ...prev, ...payload.new } : prev);
+        const newMatch = payload.new as Match; // Add this cast to fix type error
+        if (newMatch && match && newMatch.id === match.id) {
+          setMatch(prev => prev ? { ...prev, ...newMatch } : prev);
         } else {
           fetchActiveMatch();
         }
