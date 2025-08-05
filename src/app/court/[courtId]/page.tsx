@@ -31,8 +31,10 @@ export default function Court() {
   
   useEffect(() => {
     const fetchActiveMatch = async () => {
+      console.log(`Fetching active match for court ${courtId}`);
       const { data: activeRound } = await supabase.from('rounds').select('id, start_time').eq('status', 'active').single();
       if (!activeRound) {
+        console.log('No active round found');
         setMatch(null);
         setTeam1(null);
         setTeam2(null);
@@ -40,6 +42,7 @@ export default function Court() {
         setElapsedTime(0);
         return;
       }
+      console.log('Active round found:', activeRound.id);
 
       const { data: matchData } = await supabase.from('matches')
         .select('*')
@@ -49,6 +52,7 @@ export default function Court() {
         .single();
 
       if (matchData) {
+        console.log('Active match found:', matchData.id);
         setMatch({ ...matchData, rounds: { start_time: activeRound.start_time } });
 
         const [team1Data, team2Data] = await Promise.all([
@@ -68,6 +72,7 @@ export default function Court() {
           }, 1000);
         }
       } else {
+        console.log('No active match for this court');
         setMatch(null);
         setTeam1(null);
         setTeam2(null);
@@ -76,6 +81,7 @@ export default function Court() {
       }
     };
 
+    console.log('Initial fetch');
     fetchActiveMatch();
 
     const matchSubscription = supabase.channel(`match_${courtId}`)
@@ -85,6 +91,7 @@ export default function Court() {
         table: 'matches',
         filter: `court=eq.${courtId}`
       }, (payload) => {
+        console.log('Match change detected:', payload);
         const newMatch = payload.new as Match; // Add this cast to fix type error
         if (newMatch && match && newMatch.id === match.id) {
           setMatch(prev => prev ? { ...prev, ...newMatch } : prev);
@@ -92,7 +99,9 @@ export default function Court() {
           fetchActiveMatch();
         }
       })
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Match subscription status:', status);
+      });
 
     const roundSubscription = supabase.channel('rounds_changes')
       .on('postgres_changes', {
@@ -100,15 +109,21 @@ export default function Court() {
         schema: 'public',
         table: 'rounds'
       }, () => {
+        console.log('Round change detected');
         fetchActiveMatch();
       })
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Round subscription status:', status);
+      });
 
     const broadcastSubscription = supabase.channel('round_updates')
       .on('broadcast', { event: 'round_started' }, () => {
+        console.log('Broadcast received: round_started');
         fetchActiveMatch();
       })
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Broadcast subscription status:', status);
+      });
 
     return () => {
       supabase.removeChannel(matchSubscription);
