@@ -21,6 +21,13 @@ interface Team {
   name: string;
 }
 
+interface RoundData {
+  start_time: string | null;
+  is_paused: boolean;
+  total_paused_time: number;
+  last_pause_start: string | null;
+}
+
 export default function Court() {
   const { courtId } = useParams();
   const [match, setMatch] = useState<Match | null>(null);
@@ -32,7 +39,7 @@ export default function Court() {
   useEffect(() => {
     const fetchActiveMatch = async () => {
       console.log(`Fetching active match for court ${courtId}`);
-      const { data: activeRound } = await supabase.from('rounds').select('id, start_time').eq('status', 'active').single();
+      const { data: activeRound } = await supabase.from('rounds').select('id, start_time, is_paused, total_paused_time, last_pause_start').eq('status', 'active').single();
       if (!activeRound) {
         console.log('No active round found');
         setMatch(null);
@@ -53,7 +60,7 @@ export default function Court() {
 
       if (matchData) {
         console.log('Active match found:', matchData.id);
-        setMatch({ ...matchData, rounds: { start_time: activeRound.start_time } });
+        setMatch({ ...matchData, rounds: activeRound });
 
         const [team1Data, team2Data] = await Promise.all([
           supabase.from('teams').select('*').eq('id', matchData.team1_id).single(),
@@ -63,13 +70,22 @@ export default function Court() {
         setTeam1(team1Data.data);
         setTeam2(team2Data.data);
 
-        if (activeRound.start_time) {
+        if (activeRound && activeRound.start_time) {
           const start = new Date(activeRound.start_time).getTime();
           const now = Date.now();
-          setElapsedTime(Math.floor((now - start) / 1000));
-          timerRef.current = setInterval(() => {
-            setElapsedTime(prev => prev + 1);
-          }, 1000);
+          let pausedTime = activeRound.total_paused_time || 0;
+          if (activeRound.is_paused && activeRound.last_pause_start) {
+            pausedTime += Math.floor((now - new Date(activeRound.last_pause_start).getTime()) / 1000);
+          }
+          setElapsedTime(Math.floor((now - start) / 1000) - pausedTime);
+
+          if (!activeRound.is_paused) {
+            timerRef.current = setInterval(() => {
+              setElapsedTime(prev => prev + 1);
+            }, 1000);
+          } else if (timerRef.current) {
+            clearInterval(timerRef.current);
+          }
         }
       } else {
         console.log('No active match for this court');
@@ -160,13 +176,13 @@ export default function Court() {
   };
 
   if (!match) {
-    return <div className="p-4">Waiting for match to start on Court {courtId}...</div>;
+    return <div className="p-4">Oodake mängu alustamist väljakul {courtId}...</div>;
   }
 
   return (
     <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Court {courtId} - Active Match</h1>
-      <div className="text-lg mb-2">Elapsed Time: {Math.floor(elapsedTime / 60)}:{(elapsedTime % 60).toString().padStart(2, '0')}</div>
+      <h1 className="text-2xl font-bold mb-4">Väljak {courtId} - Aktiivne mäng</h1>
+      <div className="text-lg mb-2">Kulunud aeg: {Math.floor(elapsedTime / 60)}:{(elapsedTime % 60).toString().padStart(2, '0')}</div>
       <div className="flex justify-around">
         <div className="text-center">
           <h2 className="text-xl">{team1?.name}</h2>

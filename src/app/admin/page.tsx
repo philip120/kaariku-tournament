@@ -22,6 +22,9 @@ interface Round {
   status: string;
   start_time: string | null;
   end_time: string | null;
+  is_paused: boolean;
+  total_paused_time: number;
+  last_pause_start: string | null;
 }
 
 interface Match {
@@ -126,12 +129,27 @@ export default function Admin() {
     fetchData();
   };
 
+  const pauseRound = async (roundId: string) => {
+    await supabase.from('rounds').update({ is_paused: true, last_pause_start: new Date().toISOString() }).eq('id', roundId);
+    fetchData();
+  };
+
+  const resumeRound = async (roundId: string) => {
+    const { data: round } = await supabase.from('rounds').select('total_paused_time, last_pause_start').eq('id', roundId).single();
+    if (round && round.last_pause_start) {
+      const pauseDuration = Math.floor((Date.now() - new Date(round.last_pause_start).getTime()) / 1000);
+      const newTotal = (round.total_paused_time || 0) + pauseDuration;
+      await supabase.from('rounds').update({ is_paused: false, last_pause_start: null, total_paused_time: newTotal }).eq('id', roundId);
+    }
+    fetchData();
+  };
+
   return (
     <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Admin Panel - Baseball Tournament</h1>
+      <h1 className="text-2xl font-bold mb-4">Admin - Kääriku põletamise turniir</h1>
       
       <section className="mb-8">
-        <h2 className="text-xl mb-2">Groups</h2>
+        <h2 className="text-xl mb-2">Alagrupid</h2>
         <input
           type="text"
           value={newGroupName}
@@ -146,7 +164,7 @@ export default function Admin() {
       </section>
 
       <section className="mb-8">
-        <h2 className="text-xl mb-2">Teams</h2>
+        <h2 className="text-xl mb-2">Tiimid</h2>
         <input
           type="text"
           value={newTeamName}
@@ -169,7 +187,7 @@ export default function Admin() {
       </section>
 
       <section className="mb-8">
-        <h2 className="text-xl mb-2">Rounds</h2>
+        <h2 className="text-xl mb-2">Roundid</h2>
         <input
           type="number"
           value={newRoundNumber}
@@ -181,8 +199,10 @@ export default function Admin() {
         <ul>
           {rounds.map(r => (
             <li key={r.id}>
-              Round {r.number} - Status: {r.status}
+              Round {r.number} - Status: {r.status} {r.is_paused ? '(Paused)' : ''}
               {r.status === 'pending' && <button onClick={() => startRound(r.id)} className="ml-2 bg-green-500 text-white p-1">Start</button>}
+              {r.status === 'active' && !r.is_paused && <button onClick={() => pauseRound(r.id)} className="ml-2 bg-yellow-500 text-white p-1">Pause</button>}
+              {r.status === 'active' && r.is_paused && <button onClick={() => resumeRound(r.id)} className="ml-2 bg-green-500 text-white p-1">Resume</button>}
               {r.status === 'active' && <button onClick={() => finishRound(r.id)} className="ml-2 bg-red-500 text-white p-1">Finish</button>}
               {r.status === 'finished' && <button onClick={() => resetRound(r.id)} className="ml-2 bg-yellow-500 text-white p-1">Restart</button>}
             </li>
@@ -191,7 +211,7 @@ export default function Admin() {
       </section>
 
       <section className="mb-8">
-        <h2 className="text-xl mb-2">Matches</h2>
+        <h2 className="text-xl mb-2">Mängud</h2>
         <select
           value={newMatchRoundId}
           onChange={(e) => setNewMatchRoundId(e.target.value)}
