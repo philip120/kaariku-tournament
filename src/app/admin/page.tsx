@@ -103,6 +103,14 @@ export default function Admin() {
   const startRound = async (roundId: string) => {
     await supabase.from('rounds').update({ status: 'active', start_time: new Date().toISOString() }).eq('id', roundId);
     await supabase.from('matches').update({ status: 'active' }).eq('round_id', roundId);
+
+    // Broadcast to notify courts
+    await supabase.channel('round_updates').send({
+      type: 'broadcast',
+      event: 'round_started',
+      payload: { roundId }
+    });
+
     fetchData();
   };
 

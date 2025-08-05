@@ -104,9 +104,16 @@ export default function Court() {
       })
       .subscribe();
 
+    const broadcastSubscription = supabase.channel('round_updates')
+      .on('broadcast', { event: 'round_started' }, () => {
+        fetchActiveMatch();
+      })
+      .subscribe();
+
     return () => {
       supabase.removeChannel(matchSubscription);
       supabase.removeChannel(roundSubscription);
+      supabase.removeChannel(broadcastSubscription);
       if (timerRef.current) clearInterval(timerRef.current);
     };
   }, [courtId, match]);
