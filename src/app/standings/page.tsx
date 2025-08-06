@@ -152,7 +152,7 @@ export default function Standings() {
     return matches.filter(m => m.round_id === round.id);
   };
 
-  const getWinner = (match) => {
+  const getWinner = (match: Match) => {
     if (match.score1 > match.score2) return teams.find(t => t.id === match.team1_id)?.name;
     if (match.score2 > match.score1) return teams.find(t => t.id === match.team2_id)?.name;
     return 'Tie';
