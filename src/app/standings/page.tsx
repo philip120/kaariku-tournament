@@ -76,7 +76,9 @@ export default function Standings() {
     };
   }, []);
 
-  const calculateStandings = (teams, groupMatches) => {
+  const calculateStandings = (teams: Team[] | null, groupMatches: Match[]) => {
+    if (!teams) return;
+
     const standingsMap: { [group: string]: { [team: string]: Standing } } = {};
 
     // Initialize standingsMap with all teams, even if they haven't played any matches yet
