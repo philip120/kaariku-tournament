@@ -146,7 +146,7 @@ export default function Standings() {
     setQualifiers([...tops, bestSecond].filter(Boolean));
   };
 
-  const getRoundMatches = (roundType) => {
+  const getRoundMatches = (roundType: string) => {
     const round = rounds.find(r => r.type === roundType && r.status === 'finished');
     if (!round) return null;
     return matches.filter(m => m.round_id === round.id);
