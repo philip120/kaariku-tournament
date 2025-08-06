@@ -26,6 +26,20 @@ interface Round {
   is_paused: boolean;
   total_paused_time: number;
   last_pause_start: string | null;
+  type: string;
+}
+
+interface Standing {
+  teamId: string;
+  name: string;
+  group: string;
+  played: number;
+  wins: number;
+  losses: number;
+  pointsFor: number;
+  pointsAgainst: number;
+  diff: number;
+  ppg: number;
 }
 
 interface Match {
@@ -145,6 +159,106 @@ export default function Admin() {
     fetchData();
   };
 
+  const generateSemifinals = async () => {
+    const { data: teams } = await supabase.from('teams').select('*');
+    const { data: groups } = await supabase.from('groups').select('*');
+    const { data: matches } = await supabase.from('matches').select('*').eq('status', 'finished');
+
+    if (!teams || !groups || !matches) return;
+
+    const standingsMap: { [group: string]: { [team: string]: Standing } } = {};
+
+    groups.forEach(g => { standingsMap[g.name] = {}; });
+
+    teams.forEach(t => {
+      const groupName = groups.find(g => g.id === t.group_id)?.name || '';
+      if (!standingsMap[groupName][t.id]) {
+        standingsMap[groupName][t.id] = {
+          teamId: t.id,
+          name: t.name,
+          group: groupName,
+          played: 0,
+          wins: 0,
+          losses: 0,
+          pointsFor: 0,
+          pointsAgainst: 0,
+          diff: 0,
+          ppg: 0,
+        };
+      }
+    });
+
+    matches.forEach(m => {
+      const team1Standing = Object.values(standingsMap).flatMap(s => Object.values(s)).find(s => s.teamId === m.team1_id);
+      const team2Standing = Object.values(standingsMap).flatMap(s => Object.values(s)).find(s => s.teamId === m.team2_id);
+
+      if (team1Standing && team2Standing) {
+        team1Standing.played++;
+        team2Standing.played++;
+        team1Standing.pointsFor += m.score1;
+        team1Standing.pointsAgainst += m.score2;
+        team2Standing.pointsFor += m.score2;
+        team2Standing.pointsAgainst += m.score1;
+
+        if (m.score1 > m.score2) {
+          team1Standing.wins++;
+          team2Standing.losses++;
+        } else if (m.score2 > m.score1) {
+          team2Standing.wins++;
+          team1Standing.losses++;
+        }
+
+        team1Standing.diff = team1Standing.pointsFor - team1Standing.pointsAgainst;
+        team2Standing.diff = team2Standing.pointsFor - team2Standing.pointsAgainst;
+        team1Standing.ppg = team1Standing.played > 0 ? team1Standing.pointsFor / team1Standing.played : 0;
+        team2Standing.ppg = team2Standing.played > 0 ? team2Standing.pointsFor / team2Standing.played : 0;
+      }
+    });
+
+    const sortedStandings: { [group: string]: Standing[] } = {};
+    Object.keys(standingsMap).forEach(group => {
+      sortedStandings[group] = Object.values(standingsMap[group]).sort((a, b) => b.wins - a.wins || b.diff - a.diff || b.ppg - a.ppg);
+    });
+
+    const tops = Object.values(sortedStandings).map(groupStandings => groupStandings[0]?.teamId).filter(Boolean);
+    const seconds = Object.values(sortedStandings).map(groupStandings => groupStandings[1]).filter(Boolean);
+    const bestSecond = seconds.sort((a, b) => b.ppg - a.ppg)[0]?.teamId;
+    const qualifiers = [...tops, bestSecond].filter(Boolean);
+
+    if (qualifiers.length < 4) return alert('Not enough qualifiers for semifinals');
+
+    // Create semi round
+    const semiNumber = Math.max(...rounds.map(r => r.number), 0) + 1;
+    const { data: semiRound } = await supabase.from('rounds').insert({ number: semiNumber, type: 'semi' }).select().single();
+
+    // Assign matches: 1vs4 on court 1, 2vs3 on court 2
+    await supabase.from('matches').insert([
+      { round_id: semiRound.id, court: 1, team1_id: qualifiers[0], team2_id: qualifiers[3] },
+      { round_id: semiRound.id, court: 2, team1_id: qualifiers[1], team2_id: qualifiers[2] }
+    ]);
+
+    fetchData();
+  };
+
+  const generateFinal = async () => {
+    const { data: semiRound } = await supabase.from('rounds').select('*').eq('type', 'semi').eq('status', 'finished').single();
+    if (!semiRound) return alert('Semifinals not finished');
+
+    const { data: semiMatches } = await supabase.from('matches').select('*').eq('round_id', semiRound.id).eq('status', 'finished');
+    const winners = semiMatches.map(m => (m.score1 > m.score2 ? m.team1_id : m.team2_id));
+
+    if (winners.length !== 2) return alert('Invalid semifinal results');
+
+    // Create final round
+    const finalNumber = Math.max(...rounds.map(r => r.number), 0) + 1;
+    const { data: finalRound } = await supabase.from('rounds').insert({ number: finalNumber, type: 'final' }).select().single();
+
+    // Assign final match on court 1
+    await supabase.from('matches').insert({ round_id: finalRound.id, court: 1, team1_id: winners[0], team2_id: winners[1] });
+
+    fetchData();
+  };
+
   return (
     <div className="p-4">
       <Link href="/" className="text-blue-500 underline mb-4 block">Back to Home</Link>
@@ -256,6 +370,11 @@ export default function Admin() {
             </li>
           ))}
         </ul>
+      </section>
+
+      <section className="mb-8">
+        <button onClick={generateSemifinals} className="bg-purple-500 text-white p-1 mr-2">Generate Semifinals</button>
+        <button onClick={generateFinal} className="bg-purple-500 text-white p-1">Generate Final</button>
       </section>
     </div>
   );

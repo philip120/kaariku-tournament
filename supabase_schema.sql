@@ -17,7 +17,8 @@ CREATE TABLE rounds (
   end_time timestamptz,
   is_paused boolean DEFAULT false,
   total_paused_time integer DEFAULT 0,
-  last_pause_start timestamptz
+  last_pause_start timestamptz,
+  type text DEFAULT 'group'
 );
 
 CREATE TABLE matches (
