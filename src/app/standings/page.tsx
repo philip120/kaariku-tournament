@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
+import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
 
@@ -107,6 +108,7 @@ export default function Standings() {
 
   return (
     <div className="p-4">
+      <Link href="/" className="text-blue-500 underline mb-4 block">Back to Home</Link>
       <h1 className="text-2xl font-bold mb-4">Tournament Standings</h1>
       {Object.keys(standings).map(group => (
         <div key={group} className="mb-8">

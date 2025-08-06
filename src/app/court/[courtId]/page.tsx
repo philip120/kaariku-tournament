@@ -3,6 +3,7 @@
 import { useParams } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../../lib/supabase';
+import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
 
@@ -176,12 +177,18 @@ export default function Court() {
   };
 
   if (!match) {
-    return <div className="p-4">Oodake mängu alustamist väljakul {courtId}...</div>;
+    return (
+      <div className="p-4">
+        <Link href="/" className="text-blue-500 underline mb-4 block">Back to Home</Link>
+        <div>Waiting for match to start on Court {courtId}...</div>
+      </div>
+    );
   }
 
   return (
     <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Väljak {courtId} - Aktiivne mäng</h1>
+      <Link href="/" className="text-blue-500 underline mb-4 block">Back to Home</Link>
+      <h1 className="text-2xl font-bold mb-4">Court {courtId} - Active Match</h1>
       <div className="text-lg mb-2">Kulunud aeg: {Math.floor(elapsedTime / 60)}:{(elapsedTime % 60).toString().padStart(2, '0')}</div>
       <div className="flex justify-around">
         <div className="text-center">

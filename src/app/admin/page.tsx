@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
+import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
 
@@ -146,7 +147,8 @@ export default function Admin() {
 
   return (
     <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Admin - Kääriku põletamise turniir</h1>
+      <Link href="/" className="text-blue-500 underline mb-4 block">Back to Home</Link>
+      <h1 className="text-2xl font-bold mb-4">Admin Panel - Baseball Tournament</h1>
       
       <section className="mb-8">
         <h2 className="text-xl mb-2">Alagrupid</h2>
