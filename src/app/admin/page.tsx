@@ -260,6 +260,18 @@ export default function Admin() {
     fetchData();
   };
 
+  const deleteRound = async (roundId: string) => {
+    if (!confirm('Are you sure you want to delete this round and all its matches?')) return;
+    
+    // Delete matches first
+    await supabase.from('matches').delete().eq('round_id', roundId);
+    
+    // Then delete round
+    await supabase.from('rounds').delete().eq('id', roundId);
+    
+    fetchData();
+  };
+
   return (
     <div className="p-4">
       <Link href="/" className="text-blue-500 underline mb-4 block">Back to Home</Link>
@@ -322,6 +334,7 @@ export default function Admin() {
               {r.status === 'active' && r.is_paused && <button onClick={() => resumeRound(r.id)} className="ml-2 bg-green-500 text-white p-1">Resume</button>}
               {r.status === 'active' && <button onClick={() => finishRound(r.id)} className="ml-2 bg-red-500 text-white p-1">Finish</button>}
               {r.status === 'finished' && <button onClick={() => resetRound(r.id)} className="ml-2 bg-yellow-500 text-white p-1">Restart</button>}
+              {(r.type === 'semi' || r.type === 'final') && <button onClick={() => deleteRound(r.id)} className="ml-2 bg-red-700 text-white p-1">Delete</button>}
             </li>
           ))}
         </ul>
