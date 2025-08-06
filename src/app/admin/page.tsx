@@ -139,8 +139,9 @@ export default function Admin() {
   };
 
   const resetRound = async (roundId: string) => {
-    await supabase.from('rounds').update({ status: 'pending', start_time: null, end_time: null }).eq('id', roundId);
-    await supabase.from('matches').update({ status: 'pending', score1: 0, score2: 0 }).eq('round_id', roundId);
+    if (!confirm('Are you sure you want to restart this round? This will reset scores and status to pending.')) return;
+    await supabase.from('rounds').update({ status: 'pending', end_time: new Date().toISOString() }).eq('id', roundId);
+    await supabase.from('matches').update({ status: 'pending' }).eq('round_id', roundId);
     fetchData();
   };
 
