@@ -61,7 +61,7 @@ export default function Standings() {
       const { data: matchesData } = await supabase.from('matches').select('*');
       setMatches(matchesData || []);
 
-      calculateStandings(teamsData, matchesData.filter(m => m.rounds?.type === 'group' || !m.rounds?.type)); // Only group matches for standings
+      calculateStandings(teamsData, matchesData ? matchesData.filter(m => m.rounds?.type === 'group' || !m.rounds?.type) : []);
     };
 
     fetchData();
