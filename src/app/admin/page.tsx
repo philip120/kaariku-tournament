@@ -245,9 +245,10 @@ export default function Admin() {
     if (!semiRound) return alert('Semifinals not finished');
 
     const { data: semiMatches } = await supabase.from('matches').select('*').eq('round_id', semiRound.id).eq('status', 'finished');
-    const winners = semiMatches.map(m => (m.score1 > m.score2 ? m.team1_id : m.team2_id));
 
-    if (winners.length !== 2) return alert('Invalid semifinal results');
+    if (!semiMatches || semiMatches.length !== 2) return alert('Invalid semifinal results');
+
+    const winners = semiMatches.map(m => (m.score1 > m.score2 ? m.team1_id : m.team2_id));
 
     // Create final round
     const finalNumber = Math.max(...rounds.map(r => r.number), 0) + 1;
@@ -262,7 +263,7 @@ export default function Admin() {
   return (
     <div className="p-4">
       <Link href="/" className="text-blue-500 underline mb-4 block">Back to Home</Link>
-      <h1 className="text-2xl font-bold mb-4">Admin Panel - Baseball Tournament</h1>
+      <h1 className="text-2xl font-bold mb-4">Admin Panel - põletamise turniir</h1>
       
       <section className="mb-8">
         <h2 className="text-xl mb-2">Alagrupid</h2>

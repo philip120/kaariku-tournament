@@ -22,19 +22,11 @@ interface Team {
   name: string;
 }
 
-interface RoundData {
-  start_time: string | null;
-  is_paused: boolean;
-  total_paused_time: number;
-  last_pause_start: string | null;
-}
-
 export default function Court() {
   const { courtId } = useParams();
   const [match, setMatch] = useState<Match | null>(null);
   const [team1, setTeam1] = useState<Team | null>(null);
   const [team2, setTeam2] = useState<Team | null>(null);
-  const [elapsedTime, setElapsedTime] = useState(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   
   useEffect(() => {
@@ -47,7 +39,6 @@ export default function Court() {
         setTeam1(null);
         setTeam2(null);
         if (timerRef.current) clearInterval(timerRef.current);
-        setElapsedTime(0);
         return;
       }
       console.log('Active round found:', activeRound.id);
@@ -78,11 +69,11 @@ export default function Court() {
           if (activeRound.is_paused && activeRound.last_pause_start) {
             pausedTime += Math.floor((now - new Date(activeRound.last_pause_start).getTime()) / 1000);
           }
-          setElapsedTime(Math.floor((now - start) / 1000) - pausedTime);
+          // setElapsedTime(Math.floor((now - start) / 1000) - pausedTime); // This line is removed
 
           if (!activeRound.is_paused) {
             timerRef.current = setInterval(() => {
-              setElapsedTime(prev => prev + 1);
+              // setElapsedTime(prev => prev + 1); // This line is removed
             }, 1000);
           } else if (timerRef.current) {
             clearInterval(timerRef.current);
@@ -94,7 +85,7 @@ export default function Court() {
         setTeam1(null);
         setTeam2(null);
         if (timerRef.current) clearInterval(timerRef.current);
-        setElapsedTime(0);
+        // setElapsedTime(0); // This line is removed
       }
     };
 
