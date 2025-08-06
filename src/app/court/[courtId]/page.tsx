@@ -63,13 +63,12 @@ export default function Court() {
         setTeam2(team2Data.data);
 
         if (activeRound && activeRound.start_time) {
-          // Remove unused vars
-          // const start = new Date(activeRound.start_time).getTime();
-          // const now = Date.now();
-          // let pausedTime = activeRound.total_paused_time || 0;
-          // if (activeRound.is_paused && activeRound.last_pause_start) {
-          //   pausedTime += Math.floor((now - new Date(activeRound.last_pause_start).getTime()) / 1000);
-          // }
+          const start = new Date(activeRound.start_time).getTime();
+          const now = Date.now();
+          let pausedTime = activeRound.total_paused_time || 0;
+          if (activeRound.is_paused && activeRound.last_pause_start) {
+            pausedTime += Math.floor((now - new Date(activeRound.last_pause_start).getTime()) / 1000);
+          }
           // setElapsedTime(Math.floor((now - start) / 1000) - pausedTime); // This line is removed
 
           if (!activeRound.is_paused) {
