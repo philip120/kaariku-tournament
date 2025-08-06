@@ -263,7 +263,7 @@ export default function Admin() {
   return (
     <div className="p-4">
       <Link href="/" className="text-blue-500 underline mb-4 block">Back to Home</Link>
-      <h1 className="text-2xl font-bold mb-4">Admin Panel - põletamise turniir</h1>
+      <h1 className="text-2xl font-bold mb-4">Admin Panel - Baseball Tournament</h1>
       
       <section className="mb-8">
         <h2 className="text-xl mb-2">Alagrupid</h2>
@@ -328,49 +328,80 @@ export default function Admin() {
       </section>
 
       <section className="mb-8">
-        <h2 className="text-xl mb-2">Mängud</h2>
-        <select
-          value={newMatchRoundId}
-          onChange={(e) => setNewMatchRoundId(e.target.value)}
-          className="border p-1 mr-2"
-        >
-          <option value="">Select Round</option>
-          {rounds.map(r => <option key={r.id} value={r.id}>Round {r.number}</option>)}
-        </select>
-        <input
-          type="number"
-          value={newMatchCourt}
-          onChange={(e) => setNewMatchCourt(parseInt(e.target.value))}
-          placeholder="Court"
-          className="border p-1 mr-2"
-          min={1}
-          max={4}
-        />
-        <select
-          value={newMatchTeam1}
-          onChange={(e) => setNewMatchTeam1(e.target.value)}
-          className="border p-1 mr-2"
-        >
-          <option value="">Team 1</option>
-          {teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-        </select>
-        <select
-          value={newMatchTeam2}
-          onChange={(e) => setNewMatchTeam2(e.target.value)}
-          className="border p-1 mr-2"
-        >
-          <option value="">Team 2</option>
-          {teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-        </select>
-        <button onClick={addMatch} className="bg-blue-500 text-white p-1">Add Match</button>
-        <ul>
-          {matches.map(m => (
-            <li key={m.id}>
-              Round {rounds.find(r => r.id === m.round_id)?.number} Court {m.court}: 
-              {teams.find(t => t.id === m.team1_id)?.name} ({m.score1}) vs {teams.find(t => t.id === m.team2_id)?.name} ({m.score2}) - {m.status}
-            </li>
-          ))}
-        </ul>
+        <h2 className="text-xl mb-2">Matches</h2>
+        <div className="mb-4">
+          <select
+            value={newMatchRoundId}
+            onChange={(e) => setNewMatchRoundId(e.target.value)}
+            className="border p-1 mr-2"
+          >
+            <option value="">Select Round</option>
+            {rounds.map(r => <option key={r.id} value={r.id}>Round {r.number} ({r.type || 'group'})</option>)}
+          </select>
+          <input
+            type="number"
+            value={newMatchCourt}
+            onChange={(e) => setNewMatchCourt(parseInt(e.target.value))}
+            placeholder="Court"
+            className="border p-1 mr-2"
+            min={1}
+            max={4}
+          />
+          <select
+            value={newMatchTeam1}
+            onChange={(e) => setNewMatchTeam1(e.target.value)}
+            className="border p-1 mr-2"
+          >
+            <option value="">Team 1</option>
+            {teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+          </select>
+          <select
+            value={newMatchTeam2}
+            onChange={(e) => setNewMatchTeam2(e.target.value)}
+            className="border p-1 mr-2"
+          >
+            <option value="">Team 2</option>
+            {teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+          </select>
+          <button onClick={addMatch} className="bg-blue-500 text-white p-1">Add Match</button>
+        </div>
+
+        {rounds.sort((a, b) => a.number - b.number).map(round => (
+          <div key={round.id} className="mb-6">
+            <h3 className="text-lg font-bold">Round {round.number} ({round.type || 'group'}) - Status: {round.status}</h3>
+            <table className="w-full border mt-2">
+              <thead>
+                <tr>
+                  <th className="border p-2">Court</th>
+                  <th className="border p-2">Team 1</th>
+                  <th className="border p-2">Score</th>
+                  <th className="border p-2">vs</th>
+                  <th className="border p-2">Team 2</th>
+                  <th className="border p-2">Score</th>
+                  <th className="border p-2">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {matches.filter(m => m.round_id === round.id).map(m => (
+                  <tr key={m.id}>
+                    <td className="border p-2">{m.court}</td>
+                    <td className="border p-2">{teams.find(t => t.id === m.team1_id)?.name}</td>
+                    <td className="border p-2">{m.score1}</td>
+                    <td className="border p-2">vs</td>
+                    <td className="border p-2">{teams.find(t => t.id === m.team2_id)?.name}</td>
+                    <td className="border p-2">{m.score2}</td>
+                    <td className="border p-2">{m.status}</td>
+                  </tr>
+                ))}
+                {matches.filter(m => m.round_id === round.id).length === 0 && (
+                  <tr>
+                    <td colSpan={7} className="border p-2 text-center">No matches for this round</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        ))}
       </section>
 
       <section className="mb-8">
